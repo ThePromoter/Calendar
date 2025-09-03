@@ -1,12 +1,15 @@
 package com.kizitonwose.calendar.compose
 
 import androidx.annotation.IntRange
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
@@ -14,11 +17,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kizitonwose.calendar.compose.CalendarDefaults.flingBehavior
-import com.kizitonwose.calendar.compose.heatmapcalendar.HeatMapCalendarImpl
-import com.kizitonwose.calendar.compose.heatmapcalendar.HeatMapCalendarState
-import com.kizitonwose.calendar.compose.heatmapcalendar.HeatMapWeek
-import com.kizitonwose.calendar.compose.heatmapcalendar.HeatMapWeekHeaderPosition
-import com.kizitonwose.calendar.compose.heatmapcalendar.rememberHeatMapCalendarState
+import com.kizitonwose.calendar.compose.CalendarDefaults.gridFlingBehavior
+import com.kizitonwose.calendar.compose.gridcalendar.GridCalendarItems
+import com.kizitonwose.calendar.compose.gridcalendar.GridCalendarState
+import com.kizitonwose.calendar.compose.gridcalendar.rememberGridCalendarState
+import com.kizitonwose.calendar.compose.heatmapcalendar.*
 import com.kizitonwose.calendar.compose.weekcalendar.WeekCalendarImpl
 import com.kizitonwose.calendar.compose.weekcalendar.WeekCalendarState
 import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
@@ -26,12 +29,7 @@ import com.kizitonwose.calendar.compose.yearcalendar.YearCalendarMonths
 import com.kizitonwose.calendar.compose.yearcalendar.YearCalendarState
 import com.kizitonwose.calendar.compose.yearcalendar.YearContentHeightMode
 import com.kizitonwose.calendar.compose.yearcalendar.rememberYearCalendarState
-import com.kizitonwose.calendar.core.CalendarDay
-import com.kizitonwose.calendar.core.CalendarMonth
-import com.kizitonwose.calendar.core.CalendarYear
-import com.kizitonwose.calendar.core.ExperimentalCalendarApi
-import com.kizitonwose.calendar.core.Week
-import com.kizitonwose.calendar.core.WeekDay
+import com.kizitonwose.calendar.core.*
 import java.time.DayOfWeek
 
 /**
@@ -218,6 +216,41 @@ private fun Calendar(
                 onItemPlaced = state.placementInfo::onItemPlaced,
             )
         }
+    }
+}
+
+@Composable
+public fun GridCalendar(
+    modifier: Modifier = Modifier,
+    state: GridCalendarState = rememberGridCalendarState(),
+    calendarScrollPaged: Boolean = false,
+    userScrollEnabled: Boolean = true,
+    reverseLayout: Boolean = false,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    contentHeightMode: ContentHeightMode = ContentHeightMode.Wrap,
+    dayContent: @Composable BoxScope.(CalendarDay) -> Unit,
+    monthHeader: (@Composable ColumnScope.(CalendarMonth) -> Unit)? = null,
+) {
+    LazyVerticalGrid(
+        modifier = modifier,
+        state = state.gridState,
+        columns = GridCells.Fixed(7),
+        flingBehavior = gridFlingBehavior(calendarScrollPaged, state.gridState),
+        userScrollEnabled = userScrollEnabled,
+        reverseLayout = reverseLayout,
+        contentPadding = contentPadding,
+        verticalArrangement = verticalArrangement,
+        horizontalArrangement = horizontalArrangement,
+    ) {
+        GridCalendarItems(
+            itemCount = state.calendarInfo.indexCount,
+            itemData = { state.store[it]?.first },
+            contentHeightMode = contentHeightMode,
+            dayContent = dayContent,
+            monthHeader = monthHeader,
+        )
     }
 }
 

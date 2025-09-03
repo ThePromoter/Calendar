@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 
@@ -28,11 +29,26 @@ internal object CalendarDefaults {
         return rememberSnapFlingBehavior(snappingLayout)
     }
 
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    private fun pagedFlingBehavior(state: LazyGridState): FlingBehavior {
+        val snappingLayout = remember(state) {
+            val provider = SnapLayoutInfoProvider(state, SnapPosition.Start)
+            CalendarSnapLayoutInfoProvider(provider)
+        }
+        return rememberSnapFlingBehavior(snappingLayout)
+    }
+
     @Composable
     private fun continuousFlingBehavior(): FlingBehavior = ScrollableDefaults.flingBehavior()
 
     @Composable
     fun flingBehavior(isPaged: Boolean, state: LazyListState): FlingBehavior {
+        return if (isPaged) pagedFlingBehavior(state) else continuousFlingBehavior()
+    }
+
+    @Composable
+    fun gridFlingBehavior(isPaged: Boolean, state: LazyGridState): FlingBehavior {
         return if (isPaged) pagedFlingBehavior(state) else continuousFlingBehavior()
     }
 }
