@@ -12,7 +12,7 @@ A highly customizable calendar library for Android and Compose Multiplatform, ba
 
 ![Preview Phone](https://user-images.githubusercontent.com/15170090/197389318-b3925b65-aed9-4e1f-a778-ba73007cbdf7.png)
 
-![Preview Web Tablet](https://github.com/user-attachments/assets/289f093b-e7c7-47db-9715-34c09128a89a)
+![Preview Web Tablet](https://github.com/user-attachments/assets/df7b11bb-23f8-423a-bbd4-9ade376a14be)
 
 ## Features
 
@@ -51,9 +51,13 @@ View the multiplatform sample project's source code [here](https://github.com/ki
 
 ## Setup
 
-The library provides two compose artifacts: `com.kizitonwose.calendar:compose` which uses the [java.time](https://docs.oracle.com/javase/8/docs/api/java/time/package-summary.html) APIs for pure Android projects and `com.kizitonwose.calendar:compose-multiplatform` which uses the [kotlinx-datetime](https://github.com/Kotlin/kotlinx-datetime) library for Compose Multiplatform projects. The multiplatform library supports Android, iOS, WasmJs and Desktop platforms.
+The library provides the following artifacts: 
 
-The Android view library artifact `com.kizitonwose.calendar:view` also uses the `java.time` APIs and can exist alongside the Android compose artifact in an Android project if needed.
+`com.kizitonwose.calendar:compose`: The compose artifact for Android projects. This uses the [java.time](https://docs.oracle.com/javase/8/docs/api/java/time/package-summary.html) APIs. 
+
+`com.kizitonwose.calendar:compose-multiplatform`: The compose artifact for Compose Multiplatform projects. This uses the [kotlinx-datetime](https://github.com/Kotlin/kotlinx-datetime) library and supports Android, iOS, js, WasmJs and Desktop platforms.
+
+`com.kizitonwose.calendar:view`: The view artifact for Android projects. This uses the [java.time](https://docs.oracle.com/javase/8/docs/api/java/time/package-summary.html) APIs and can exist alongside the Android compose artifact in an Android project if needed.
 
 #### Step 1
 
@@ -112,14 +116,14 @@ Add the multiplatform calendar library to your project's `build.gradle.kts`:
 ```kotlin
 commonMain.dependencies {
   // The calendar library for compose multiplatform projects
-  // Supports Android, iOS, WasmJs and Desktop platforms
+  // Supports Android, iOS, js, WasmJs and Desktop platforms
   implementation("com.kizitonwose.calendar:compose-multiplatform:<latest-version>")
 }
 ```
 
 You can find the latest version of the library on the maven central badge above.
 
-Snapshots of the development version are available in [Sonatype’s snapshots repository](https://s01.oss.sonatype.org/content/repositories/snapshots/com/kizitonwose/calendar/).
+Snapshots of the development version are available in [Central Portal Snapshots repository](https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/com/kizitonwose/calendar/).
 
 #### Compose UI version compatibility
 
@@ -127,12 +131,13 @@ For the compose calendar library, ensure that you are using the library version 
 
 | Compose UI | Android Calendar Library | Multiplatform Calendar Library |
 |:----------:|:------------------------:|:------------------------------:|
-|   1.2.x    |           2.0.x          |               -                |
-|   1.3.x    |       2.1.x - 2.2.x      |               -                |
-|   1.4.x    |           2.3.x          |               -                |
-|   1.5.x    |           2.4.x          |               -                |
-|   1.6.x    |           2.5.x          |             2.5.x              |
-|   1.7.x    |           2.6.x          |             2.6.x              |
+|   1.2.x    |          2.0.x           |               -                |
+|   1.3.x    |      2.1.x - 2.2.x       |               -                |
+|   1.4.x    |          2.3.x           |               -                |
+|   1.5.x    |          2.4.x           |               -                |
+|   1.6.x    |          2.5.x           |             2.5.x              |
+|   1.7.x    |          2.6.x           |             2.6.x              |
+|   1.8.x    |      2.7.x - 2.8.x       |         2.7.x - 2.8.x          |
 
 ## Usage
 

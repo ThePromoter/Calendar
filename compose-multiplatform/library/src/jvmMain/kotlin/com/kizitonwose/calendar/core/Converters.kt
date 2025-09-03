@@ -1,12 +1,9 @@
+@file:Suppress("NewApi")
+
 package com.kizitonwose.calendar.core
 
-import java.time.Year as jtYear
-import java.time.YearMonth as jtYearMonth
+import java.time.Year as JavaYear
 
-public fun YearMonth.toJavaYearMonth(): jtYearMonth = jtYearMonth.of(year, month)
+public fun Year.toJavaYear(): JavaYear = JavaYear.of(value)
 
-public fun jtYearMonth.toKotlinYearMonth(): YearMonth = YearMonth(year, month)
-
-public fun Year.toJavaYear(): jtYear = jtYear.of(value)
-
-public fun jtYear.toKotlinYear(): Year = Year(value)
+public fun JavaYear.toKotlinYear(): Year = Year(value)

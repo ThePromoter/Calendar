@@ -1,3 +1,4 @@
+
 import Example9PageSharedComponents.CalendarHeader
 import Example9PageSharedComponents.Day
 import Example9PageSharedComponents.MonthAndWeekCalendarTitle
@@ -7,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -25,15 +27,13 @@ import com.kizitonwose.calendar.compose.weekcalendar.WeekCalendarState
 import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.WeekDayPosition
-import com.kizitonwose.calendar.core.atEndOfMonth
-import com.kizitonwose.calendar.core.atStartOfMonth
 import com.kizitonwose.calendar.core.daysOfWeek
 import com.kizitonwose.calendar.core.minusMonths
 import com.kizitonwose.calendar.core.now
 import com.kizitonwose.calendar.core.plusMonths
-import com.kizitonwose.calendar.core.yearMonth
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.yearMonth
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
@@ -56,7 +56,8 @@ fun Example9PageAnimatedVisibility(adjacentMonths: Int = 500) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(Color.White)
+            .padding(LocalScaffoldPaddingValues.current),
     ) {
         val monthState = rememberCalendarState(
             startMonth = startMonth,
@@ -65,8 +66,8 @@ fun Example9PageAnimatedVisibility(adjacentMonths: Int = 500) {
             firstDayOfWeek = daysOfWeek.first(),
         )
         val weekState = rememberWeekCalendarState(
-            startDate = startMonth.atStartOfMonth(),
-            endDate = endMonth.atEndOfMonth(),
+            startDate = startMonth.firstDay,
+            endDate = endMonth.lastDay,
             firstVisibleWeekDate = currentDate,
             firstDayOfWeek = daysOfWeek.first(),
         )

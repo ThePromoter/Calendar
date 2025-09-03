@@ -33,9 +33,10 @@ import com.kizitonwose.calendar.core.CalendarMonth
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.ExperimentalCalendarApi
 import com.kizitonwose.calendar.core.Year
-import com.kizitonwose.calendar.core.YearMonth
 import com.kizitonwose.calendar.core.daysOfWeek
+import com.kizitonwose.calendar.core.now
 import com.kizitonwose.calendar.core.plusYears
+import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalCalendarApi::class)
@@ -62,6 +63,8 @@ fun Example11Page(adjacentYears: Int = 50) {
             modifier = Modifier
                 .fillMaxSize()
                 .testTag("Calendar"),
+            contentPadding = LocalScaffoldPaddingValues.current +
+                PaddingValues(horizontal = if (isTablet) 52.dp else 10.dp),
             state = state,
             dayContent = { day ->
                 Day(
@@ -80,7 +83,6 @@ fun Example11Page(adjacentYears: Int = 50) {
             contentHeightMode = YearContentHeightMode.Wrap,
             monthVerticalSpacing = 20.dp,
             monthHorizontalSpacing = if (isTablet) 52.dp else 10.dp,
-            contentPadding = PaddingValues(horizontal = if (isTablet) 52.dp else 10.dp),
             isMonthVisible = {
                 it.yearMonth >= currentMonth
             },
