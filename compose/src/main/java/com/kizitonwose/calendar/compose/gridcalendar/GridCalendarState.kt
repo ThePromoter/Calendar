@@ -47,7 +47,7 @@ public fun rememberGridCalendarState(
         ),
         saver = GridCalendarState.Saver,
     ) {
-        val state = GridCalendarState(
+        GridCalendarState(
             startMonth = startMonth,
             endMonth = endMonth,
             firstDayOfWeek = firstDayOfWeek,
@@ -55,8 +55,6 @@ public fun rememberGridCalendarState(
             outDateStyle = outDateStyle,
             visibleItemState = null,
         )
-        if (firstVisibleMonth != startMonth) state.scrollToInitialMonth(firstVisibleMonth)
-        state
     }
 }
 
@@ -78,7 +76,7 @@ public class GridCalendarState internal constructor(
     firstDayOfWeek: DayOfWeek,
     firstVisibleMonth: YearMonth,
     outDateStyle: OutDateStyle,
-    visibleItemState: VisibleItemState?
+    visibleItemState: VisibleItemState?,
 ) : ScrollableState {
     /** Backing state for [startMonth] */
     private var _startMonth by mutableStateOf(startMonth)
@@ -138,7 +136,13 @@ public class GridCalendarState internal constructor(
      * @see [lastVisibleMonth]
      */
     public val firstVisibleMonth: CalendarMonth by derivedStateOf {
-        store[gridState.firstVisibleItemIndex]
+        val (_, firstVisibleMonth) = store[gridState.firstVisibleItemIndex] ?: return@derivedStateOf getCalendarMonthData(
+            startMonth = startMonth,
+            offset = 0,
+            firstDayOfWeek = firstDayOfWeek,
+            outDateStyle = outDateStyle,
+        ).calendarMonth
+        firstVisibleMonth
     }
 
     /**
@@ -147,7 +151,95 @@ public class GridCalendarState internal constructor(
      * @see [firstVisibleMonth]
      */
     public val lastVisibleMonth: CalendarMonth by derivedStateOf {
-        store[gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0]
+        val lastVisibleIndex = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+        val (_, lastVisibleMonth) = store[lastVisibleIndex] ?: return@derivedStateOf getCalendarMonthData(
+            startMonth = startMonth,
+            offset = 0,
+            firstDayOfWeek = firstDayOfWeek,
+            outDateStyle = outDateStyle,
+        ).calendarMonth
+        lastVisibleMonth
+    }
+
+    /**
+     * The first day that is visible.
+     *
+     * @see [lastVisibleDay]
+     */
+    public val firstVisibleDay: CalendarDay? by derivedStateOf {
+        val (firstVisibleItem) = store[gridState.firstVisibleItemIndex] ?: return@derivedStateOf null
+        when (firstVisibleItem) {
+            is GridCalendarItem.Day   -> firstVisibleItem.day
+            is GridCalendarItem.Month -> {
+                // Find the first day after this month header
+                val nextIndex = gridState.firstVisibleItemIndex + 1
+                val (nextItem) = store[nextIndex] ?: return@derivedStateOf null
+                (nextItem as? GridCalendarItem.Day)?.day
+            }
+        }
+    }
+
+    /**
+     * The last day that is visible.
+     *
+     * @see [firstVisibleDay]
+     */
+    public val lastVisibleDay: CalendarDay? by derivedStateOf {
+        val lastVisibleIndex = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+        val (lastVisibleItem) = store[lastVisibleIndex] ?: return@derivedStateOf null
+        when (lastVisibleItem) {
+            is GridCalendarItem.Day   -> lastVisibleItem.day
+            is GridCalendarItem.Month -> {
+                // Find the last day before this month header
+                val prevIndex = lastVisibleIndex - 1
+                if (prevIndex >= 0) {
+                    val (prevItem) = store[prevIndex] ?: return@derivedStateOf null
+                    (prevItem as? GridCalendarItem.Day)?.day
+                } else null
+            }
+        }
+    }
+
+    /**
+     * The first week that is visible, represented as a list of 7 days.
+     *
+     * @see [lastVisibleWeek]
+     */
+    public val firstVisibleWeek: List<CalendarDay> by derivedStateOf {
+        val firstDay = firstVisibleDay ?: return@derivedStateOf emptyList()
+
+        // Find the month this day belongs to
+        val calendarMonth = this.firstVisibleMonth
+
+        // Find which week contains this day
+        for (week in calendarMonth.weekDays) {
+            if (week.contains(firstDay)) {
+                return@derivedStateOf week
+            }
+        }
+
+        emptyList()
+    }
+
+    /**
+     * The last week that is visible, represented as a list of 7 days.
+     *
+     * @see [firstVisibleWeek]
+     */
+    public val lastVisibleWeek: List<CalendarDay> by derivedStateOf {
+        val lastDay = lastVisibleDay ?: return@derivedStateOf emptyList()
+
+        // Find the month this day belongs to
+        val calendarMonth = lastVisibleMonth
+
+        // Find which week contains this day
+        for (week in calendarMonth.weekDays) {
+            if (week.contains(lastDay)) {
+                return@derivedStateOf week
+            }
+        }
+
+        emptyList()
     }
 
     /**
@@ -169,7 +261,15 @@ public class GridCalendarState internal constructor(
      * see [LazyListLayoutInfo]
      */
     private val layoutInfo: GridCalendarLayoutInfo
-        get() = GridCalendarLayoutInfo(gridState.layoutInfo) { index -> store[index] }
+        get() = GridCalendarLayoutInfo(gridState.layoutInfo) { index ->
+            val (_, month) = store[index] ?: return@GridCalendarLayoutInfo getCalendarMonthData(
+                startMonth = startMonth,
+                offset = 0,
+                firstDayOfWeek = firstDayOfWeek,
+                outDateStyle = outDateStyle,
+            ).calendarMonth
+            month
+        }
 
     /**
      * [InteractionSource] that will be used to dispatch drag events when this
@@ -184,42 +284,84 @@ public class GridCalendarState internal constructor(
         firstVisibleItemScrollOffset = visibleItemState?.firstVisibleItemScrollOffset ?: 0,
     )
 
-    internal var calendarInfo by mutableStateOf(CalendarInfo(indexCount = 0))
+    internal var calendarInfo by mutableStateOf(
+        CalendarInfo(
+            indexCount = 0,
+            firstDayOfWeek = firstDayOfWeek,
+            outDateStyle = outDateStyle,
+        ),
+    )
 
-    internal val allMonths: List<GridCalendarItem.Month> get() = (0 until calendarInfo.indexCount)
-        .map { monthOffset -> GridCalendarItem.Month(store[monthOffset]) }
+    public val allItems: List<GridCalendarItem>
+        get() = (0 until calendarInfo.indexCount).mapNotNull { store[it]?.first }
 
-    public val allItems: List<GridCalendarItem> get() = allMonths
-        .flatMap { monthItem ->
-            listOf(
-                monthItem,
-                *monthItem.month.weekDays.flatMap { it }.map { it.asGridCalendarItem() }.toTypedArray()
+    // Single store for all grid items (indexed by grid position)
+    internal val store = DataStore { index ->
+        generateGridItem(index)
+    }
+
+    private fun generateGridItem(index: Int): Pair<GridCalendarItem, CalendarMonth>? {
+        var currentIndex = 0
+        for (monthOffset in 0 until calendarInfo.indexCount) {
+            val monthData = getCalendarMonthData(
+                startMonth = this.startMonth,
+                offset = monthOffset,
+                firstDayOfWeek = this.firstDayOfWeek,
+                outDateStyle = this.outDateStyle,
             )
-        }
+            val month = monthData.calendarMonth
 
-    internal val store = DataStore { offset ->
-        getCalendarMonthData(
-            startMonth = this.startMonth,
-            offset = offset,
-            firstDayOfWeek = this.firstDayOfWeek,
-            outDateStyle = this.outDateStyle,
-        ).calendarMonth
+            // Month header
+            if (currentIndex == index) {
+                return GridCalendarItem.Month(month) to month
+            }
+            currentIndex++
+
+            // Days in month
+            val days = month.weekDays.flatMap { it }
+            for (day in days) {
+                if (currentIndex == index) {
+                    return GridCalendarItem.Day(day) to month
+                }
+                currentIndex++
+            }
+        }
+        return null
     }
 
     init {
-        monthDataChanged() // Update indexCount initially.
+        monthDataChanged()
+        if (visibleItemState == null && firstVisibleMonth != startMonth) {
+            scrollToInitialMonth(firstVisibleMonth)
+        }
     }
 
     private fun monthDataChanged() {
         store.clear()
         checkRange(startMonth, endMonth)
+        val monthCount = getMonthIndicesCount(startMonth, endMonth)
+
+        // Calculate total item count (month headers + days)
+        var itemCount = 0
+        for (monthOffset in 0 until monthCount) {
+            val monthData = getCalendarMonthData(
+                startMonth = this.startMonth,
+                offset = monthOffset,
+                firstDayOfWeek = this.firstDayOfWeek,
+                outDateStyle = this.outDateStyle,
+            )
+            itemCount++ // Month header
+            itemCount += monthData.calendarMonth.weekDays.flatMap { it }.size // Days
+        }
+        // itemCount is now stored in calendarInfo.indexCount
+
         // Read the firstDayOfWeek and outDateStyle properties to ensure recomposition
         // even though they are unused in the CalendarInfo. Alternatively, we could use
         // mutableStateMapOf() as the backing store for DataStore() to ensure recomposition
         // but not sure how compose handles recomposition of a lazy list that reads from
         // such map when an entry unrelated to the visible indices changes.
         calendarInfo = CalendarInfo(
-            indexCount = getMonthIndicesCount(startMonth, endMonth),
+            indexCount = itemCount, // Total grid items, not just months
             firstDayOfWeek = firstDayOfWeek,
             outDateStyle = outDateStyle,
         )
@@ -304,11 +446,17 @@ public class GridCalendarState internal constructor(
         scrollToDay(day, animate = true)
 
     private suspend fun scrollToDay(day: CalendarDay, animate: Boolean) {
-        val dayIndex = allItems.indexOfFirstOrNull { it is GridCalendarItem.Day && it.day == day } ?: return
-        if (animate) {
-            gridState.animateScrollToItem(dayIndex)
-        } else {
-            gridState.scrollToItem(dayIndex)
+        // Find the day in the store
+        for (index in 0 until calendarInfo.indexCount) {
+            val (item) = store[index] ?: continue
+            if (item is GridCalendarItem.Day && item.day == day) {
+                if (animate) {
+                    gridState.animateScrollToItem(index)
+                } else {
+                    gridState.scrollToItem(index)
+                }
+                return
+            }
         }
     }
 
@@ -317,7 +465,14 @@ public class GridCalendarState internal constructor(
             Log.d("CalendarState", "Attempting to scroll out of range: $month")
             return null
         }
-        return allItems.indexOfFirstOrNull { it is GridCalendarItem.Month && it.month.yearMonth == month }
+        // Find the month header in the store
+        for (index in 0 until calendarInfo.indexCount) {
+            val (item) = store[index] ?: continue
+            if (item is GridCalendarItem.Month && item.month.yearMonth == month) {
+                return index
+            }
+        }
+        return null
     }
 
     /**

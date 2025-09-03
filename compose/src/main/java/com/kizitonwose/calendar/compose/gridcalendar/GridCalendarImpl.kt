@@ -12,25 +12,42 @@ import com.kizitonwose.calendar.core.CalendarMonth
 
 @Suppress("FunctionName")
 internal fun LazyGridScope.GridCalendarItems(
-    monthCount: Int,
-    monthData: (offset: Int) -> CalendarMonth,
+    itemCount: Int,
+    itemData: (offset: Int) -> GridCalendarItem?,
     contentHeightMode: ContentHeightMode,
     dayContent: @Composable BoxScope.(CalendarDay) -> Unit,
     monthHeader: (@Composable ColumnScope.(CalendarMonth) -> Unit)?,
 ) {
-    (0 until monthCount).map { monthOffset ->
-        val month = monthData(monthOffset)
-        val fillHeight = when (contentHeightMode) {
-            ContentHeightMode.Wrap -> false
-            ContentHeightMode.Fill -> true
-        }
+    val fillHeight = when (contentHeightMode) {
+        ContentHeightMode.Wrap -> false
+        ContentHeightMode.Fill -> true
+    }
 
-        monthHeader?.let {
-            item(
-                key = "header-$month",
-                span = { GridItemSpan(maxCurrentLineSpan) },
-                contentType = "monthHeader"
-            ) {
+    items(
+        count = itemCount,
+        key = { index ->
+            when (val item = itemData(index)) {
+                is GridCalendarItem.Month -> "month-${item.month.yearMonth}"
+                is GridCalendarItem.Day   -> "day-${item.day.date}-${item.day.position}"
+                null                      -> "null-$index"
+            }
+        },
+        span = { index ->
+            when (itemData(index)) {
+                is GridCalendarItem.Month -> GridItemSpan(maxCurrentLineSpan)
+                else                      -> GridItemSpan(1)
+            }
+        },
+        contentType = { index ->
+            when (val item = itemData(index)) {
+                is GridCalendarItem.Month -> "monthHeader"
+                is GridCalendarItem.Day   -> item.day.position
+                null                      -> "null"
+            }
+        },
+    ) { index ->
+        when (val item = itemData(index)) {
+            is GridCalendarItem.Month -> monthHeader?.let {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -42,25 +59,18 @@ internal fun LazyGridScope.GridCalendarItems(
                             },
                         ),
                 ) {
-                    monthHeader(this, month)
+                    monthHeader(this, item.month)
                 }
             }
-        }
-
-        val allDaysInMonth = month.weekDays.flatten()
-        items(
-            count = allDaysInMonth.count(),
-            key = { index -> allDaysInMonth[index] },
-            contentType = { allDaysInMonth[it].position }
-        ) {
-            val day = allDaysInMonth[it]
-            Box(
+            is GridCalendarItem.Day   -> Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clipToBounds(),
             ) {
-                dayContent(day)
+                dayContent(item.day)
             }
+            // Empty item, shouldn't happen in practice
+            null                      -> Unit
         }
     }
 }

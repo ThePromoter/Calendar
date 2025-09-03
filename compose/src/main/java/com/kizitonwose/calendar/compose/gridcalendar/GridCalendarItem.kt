@@ -9,6 +9,3 @@ public sealed interface GridCalendarItem {
     public data class Month(val month: CalendarMonth) : GridCalendarItem
     public data class Day(val day: CalendarDay) : GridCalendarItem
 }
-
-public fun CalendarDay.asGridCalendarItem(): GridCalendarItem = GridCalendarItem.Day(this)
-public fun LocalDate.asGridCalendarItem(): GridCalendarItem = GridCalendarItem.Day(CalendarDay(this, DayPosition.MonthDate))

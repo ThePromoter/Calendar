@@ -1,6 +1,7 @@
 package com.kizitonwose.calendar.compose
 
 import androidx.annotation.IntRange
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -226,6 +227,8 @@ public fun GridCalendar(
     userScrollEnabled: Boolean = true,
     reverseLayout: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     contentHeightMode: ContentHeightMode = ContentHeightMode.Wrap,
     dayContent: @Composable BoxScope.(CalendarDay) -> Unit,
     monthHeader: (@Composable ColumnScope.(CalendarMonth) -> Unit)? = null,
@@ -238,10 +241,12 @@ public fun GridCalendar(
         userScrollEnabled = userScrollEnabled,
         reverseLayout = reverseLayout,
         contentPadding = contentPadding,
+        verticalArrangement = verticalArrangement,
+        horizontalArrangement = horizontalArrangement,
     ) {
         GridCalendarItems(
-            monthCount = state.calendarInfo.indexCount,
-            monthData = state.store::get,
+            itemCount = state.calendarInfo.indexCount,
+            itemData = { state.store[it]?.first },
             contentHeightMode = contentHeightMode,
             dayContent = dayContent,
             monthHeader = monthHeader,
