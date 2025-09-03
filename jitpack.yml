@@ -1,4 +1,4 @@
 jdk:
   - openjdk17
 install:
-  - ./gradlew publishToMavenLocal -x signMavenPublication
+  - ./gradlew publishToMavenLocal -x signMavenPublication -x signArchives
